@@ -1,7 +1,7 @@
 import React from 'react'
 import { X, ShoppingCart } from 'lucide-react'
-import { useCart } from '../../hook/useCart'
-import { useToast } from '../../hook/useToast'
+import { useCart } from '../../hook/UseCart'
+import { useToast } from '../../hook/UseToast'
 import CartItem from './CartItem'
 
 const CartDrawer = () => {

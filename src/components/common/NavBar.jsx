@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ShoppingCart, User, Search, Menu, X, Home, Package, TrendingUp, Heart } from 'lucide-react'
-import { useCart } from '../../hook/useCart'
-import { useAuth } from '../../hook/useAuth'
+import { useCart } from '../../hook/UseCart'
+import { useAuth } from '../../hook/UseAuth'
 
 const Navbar = () => {
   const { itemCount, setIsOpen } = useCart()

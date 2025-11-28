@@ -1,7 +1,7 @@
 import React from 'react'
 import { Minus, Plus, Trash2, Package } from 'lucide-react'
-import { useCart } from '../../hook/useCart'
-import { useToast } from '../../hook/useToast'
+import { useCart } from '../../hook/UseCart'
+import { useToast } from '../../hook/UseToast'
 
 const CartItem = ({ item }) => {
   const { removeFromCart, updateQuantity } = useCart()
