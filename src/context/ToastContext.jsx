@@ -1,5 +1,5 @@
 import React, { createContext, useState } from 'react'
-import ToastContainer from '../components/notifications/ToastContainer'
+import ToastContainer from '../components/notification/ToastContainer'
 
 export const ToastContext = createContext()
 

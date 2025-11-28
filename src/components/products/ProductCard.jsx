@@ -1,7 +1,7 @@
 import React from 'react'
 import { ShoppingCart, Heart, Star, Package } from 'lucide-react'
-import { useCart } from '../../hooks/useCart'
-import { useToast } from '../../hooks/useToast'
+import { useCart } from '../../hook/useCart'
+import { useToast } from '../../hook/useToast'
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart()

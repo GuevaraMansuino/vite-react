@@ -1,101 +1,78 @@
 import React from 'react'
-import { X, ShoppingCart } from 'lucide-react'
-import { useCart } from '../../hooks/useCart'
-import { useToast } from '../../hooks/useToast'
-import CartItem from './CartItem'
+import { Minus, Plus, Trash2, Package } from 'lucide-react'
+import { useCart } from '../../hook/useCart'
+import { useToast } from '../../hook/useToast'
 
-const CartDrawer = () => {
-  const { cart, isOpen, setIsOpen, total, clearCart } = useCart()
+const CartItem = ({ item }) => {
+  const { removeFromCart, updateQuantity } = useCart()
   const { showToast } = useToast()
 
-  const handleCheckout = () => {
-    if (cart.length === 0) {
-      showToast('Tu carrito está vacío', 'error')
-      return
-    }
-    showToast('Procesando compra...', 'success')
-    setTimeout(() => {
-      clearCart()
-      setIsOpen(false)
-      showToast('¡Compra realizada con éxito!', 'success')
-    }, 1500)
+  const handleRemove = () => {
+    removeFromCart(item.id_key)
+    showToast('Producto eliminado del carrito', 'info')
   }
 
-  if (!isOpen) return null
+  const handleIncrement = () => {
+    if (item.quantity >= item.stock) {
+      showToast('No hay más stock disponible', 'error')
+      return
+    }
+    updateQuantity(item.id_key, item.quantity + 1)
+  }
+
+  const handleDecrement = () => {
+    updateQuantity(item.id_key, item.quantity - 1)
+  }
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fadeIn"
-        onClick={() => setIsOpen(false)}
-      />
-
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-black z-50 shadow-2xl shadow-green-400/20 border-l border-green-400/30 flex flex-col animate-slideIn">
-        {/* Header */}
-        <div className="p-6 border-b border-green-400/30 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-green-400">Tu Carrito</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
+    <div className="bg-zinc-900/80 rounded-lg p-4 border border-green-400/20 hover:border-green-400/40 transition-all">
+      <div className="flex gap-4">
+        {/* Image */}
+        <div className="w-20 h-20 bg-gradient-to-br from-zinc-800 to-black rounded-lg flex items-center justify-center flex-shrink-0">
+          <Package size={32} className="text-green-400" />
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {cart.length === 0 ? (
-            <div className="text-center py-12">
-              <ShoppingCart size={64} className="mx-auto text-gray-600 mb-4" />
-              <p className="text-gray-400">Tu carrito está vacío</p>
-              <p className="text-gray-500 text-sm mt-2">
-                Agrega productos para comenzar tu compra
-              </p>
-            </div>
-          ) : (
-            cart.map((item) => <CartItem key={item.id_key} item={item} />)
-          )}
-        </div>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-white mb-1 truncate">{item.name}</h3>
+          <p className="text-green-400 font-bold text-lg">${item.price.toFixed(2)}</p>
+          <p className="text-xs text-gray-500 mt-1">Stock disponible: {item.stock}</p>
 
-        {/* Footer */}
-        {cart.length > 0 && (
-          <div className="p-6 border-t border-green-400/30 space-y-4 bg-zinc-950">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-gray-400">
-                <span>Subtotal:</span>
-                <span>${total.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-gray-400">
-                <span>Envío:</span>
-                <span className="text-green-400">GRATIS</span>
-              </div>
-              <div className="h-px bg-green-400/20 my-3"></div>
-              <div className="flex items-center justify-between text-xl font-bold">
-                <span className="text-gray-300">Total:</span>
-                <span className="text-green-400">${total.toFixed(2)}</span>
-              </div>
-            </div>
-            
+          {/* Quantity Controls */}
+          <div className="flex items-center gap-2 mt-3">
             <button
-              onClick={handleCheckout}
-              className="w-full py-4 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-bold rounded-lg transition-all shadow-lg shadow-green-400/50 hover:shadow-green-400/70 text-lg"
+              onClick={handleDecrement}
+              className="w-8 h-8 bg-zinc-800 hover:bg-green-400/20 text-green-400 rounded flex items-center justify-center transition-colors border border-green-400/20"
             >
-              FINALIZAR COMPRA
+              <Minus size={16} />
             </button>
-            
+            <span className="w-12 text-center text-white font-semibold">
+              {item.quantity}
+            </span>
             <button
-              onClick={() => setIsOpen(false)}
-              className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-gray-300 font-semibold rounded-lg transition-colors border border-green-400/20"
+              onClick={handleIncrement}
+              disabled={item.quantity >= item.stock}
+              className="w-8 h-8 bg-zinc-800 hover:bg-green-400/20 text-green-400 rounded flex items-center justify-center transition-colors border border-green-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Seguir Comprando
+              <Plus size={16} />
+            </button>
+            <button
+              onClick={handleRemove}
+              className="ml-auto p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors"
+            >
+              <Trash2 size={18} />
             </button>
           </div>
-        )}
+        </div>
       </div>
-    </>
+
+      {/* Subtotal */}
+      <div className="mt-3 pt-3 border-t border-green-400/10 flex items-center justify-between">
+        <span className="text-sm text-gray-400">Subtotal:</span>
+        <span className="text-white font-bold">${(item.price * item.quantity).toFixed(2)}</span>
+      </div>
+    </div>
   )
 }
 
-export default CartDrawer
+export default CartItem
