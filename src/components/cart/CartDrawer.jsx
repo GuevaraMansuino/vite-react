@@ -2,23 +2,103 @@ import React from 'react'
 import { X, ShoppingCart } from 'lucide-react'
 import { useCart } from '../../hook/UseCart'
 import { useToast } from '../../hook/UseToast'
+import { createOrder } from '../../api/orderApi'
+import { createBill } from '../../api/billApi'
+import { updateProduct } from '../../api/productApi'
+import apiClient from '../../api/axios.config'
 import CartItem from './CartItem'
 
 const CartDrawer = () => {
   const { cart, isOpen, setIsOpen, total, clearCart } = useCart()
   const { showToast } = useToast()
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       showToast('Tu carrito está vacío', 'error')
       return
     }
-    showToast('Procesando compra...', 'success')
-    setTimeout(() => {
+
+    const user = JSON.parse(localStorage.getItem('user'))
+    if (!user) {
+      showToast('Debes iniciar sesión para realizar una compra', 'error')
+      return
+    }
+
+    try {
+      showToast('Procesando compra...', 'info')
+
+      // 1️⃣ CREAR BILL (PRIMERO)
+      const billData = {
+        bill_number: `BILL-${Date.now()}`,
+        discount: 0,
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        total: total,
+        payment_type: 1, // CASH
+        client_id: user.id
+      }
+
+      console.log('Creating bill:', billData)
+      const billResponse = await createBill(billData)
+      const bill = billResponse.data ?? billResponse
+      console.log('Bill created:', bill)
+
+      // 2️⃣ CREAR ORDER CON bill_id
+      const orderData = {
+        client_id: user.id,
+        total: total,
+        status: 1, // PENDING
+        delivery_method: 2, // ON_HAND
+        date: new Date().toISOString(),
+        bill_id: bill.id
+      }
+
+      console.log('Creating order:', orderData)
+      const orderResponse = await createOrder(orderData)
+      const order = orderResponse.data ?? orderResponse
+      console.log('Order created:', order)
+
+      // 3️⃣ CREAR ORDER DETAILS
+      const orderDetailsPromises = cart.map(item =>
+        apiClient.post('/order_details', {
+          order_id: order.id,
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price
+        })
+      )
+
+      await Promise.all(orderDetailsPromises)
+      console.log('Order details created')
+
+      // 4️⃣ ACTUALIZAR STOCK
+      const stockUpdates = cart.map(item =>
+        updateProduct(item.id, {
+          id: item.id, // 👈 ID DUPLICADO (path + body)
+          name: item.name,
+          price: item.price,
+          category_id: item.category_id,
+          stock: item.stock - item.quantity
+        })
+      )   
+      await Promise.all(stockUpdates)
+      console.log('Stock updated')
+
+      // 5️⃣ LIMPIAR Y CERRAR
       clearCart()
       setIsOpen(false)
       showToast('¡Compra realizada con éxito!', 'success')
-    }, 1500)
+
+    } catch (error) {
+      console.error('Error al procesar la compra:', error)
+      console.error('Error details:', error.response?.data)
+
+      showToast(
+        `Error al procesar la compra: ${
+          error.response?.data?.message || error.message
+        }`,
+        'error'
+      )
+    }
   }
 
   if (!isOpen) return null
@@ -55,7 +135,9 @@ const CartDrawer = () => {
               </p>
             </div>
           ) : (
-            cart.map((item) => <CartItem key={item.id_key} item={item} />)
+            cart.map(item => (
+              <CartItem key={item.id_key} item={item} />
+            ))
           )}
         </div>
 
@@ -77,14 +159,14 @@ const CartDrawer = () => {
                 <span className="text-green-400">${total.toFixed(2)}</span>
               </div>
             </div>
-            
+
             <button
               onClick={handleCheckout}
               className="w-full py-4 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-bold rounded-lg transition-all shadow-lg shadow-green-400/50 hover:shadow-green-400/70 text-lg"
             >
               FINALIZAR COMPRA
             </button>
-            
+
             <button
               onClick={() => setIsOpen(false)}
               className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-gray-300 font-semibold rounded-lg transition-colors border border-green-400/20"

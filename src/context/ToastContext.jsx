@@ -8,7 +8,17 @@ export const ToastProvider = ({ children }) => {
 
   const showToast = (message, type = 'info') => {
     const id = Date.now()
-    setToasts((prev) => [...prev, { id, message, type }])
+    setToasts((prev) => {
+      // Check if a similar toast already exists
+      const existingToast = prev.find(toast => toast.message === message && toast.type === type)
+      if (existingToast) {
+        // If exists, don't add duplicate, but reset its timer
+        setTimeout(() => removeToast(existingToast.id), 3000)
+        return prev
+      }
+      // Add new toast
+      return [...prev, { id, message, type }]
+    })
     setTimeout(() => removeToast(id), 3000)
   }
 

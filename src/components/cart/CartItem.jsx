@@ -8,7 +8,7 @@ const CartItem = ({ item }) => {
   const { showToast } = useToast()
 
   const handleRemove = () => {
-    removeFromCart(item.id_key)
+    removeFromCart(item.id_key || item.id)
     showToast('Producto eliminado del carrito', 'info')
   }
 
@@ -17,11 +17,11 @@ const CartItem = ({ item }) => {
       showToast('No hay más stock disponible', 'error')
       return
     }
-    updateQuantity(item.id_key, item.quantity + 1)
+    updateQuantity(item.id_key || item.id, item.quantity + 1)
   }
 
   const handleDecrement = () => {
-    updateQuantity(item.id_key, item.quantity - 1)
+    updateQuantity(item.id_key || item.id, item.quantity - 1)
   }
 
   return (

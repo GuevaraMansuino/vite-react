@@ -40,7 +40,7 @@ export const getOrderById = async (id) => {
 // Crear una nueva orden
 export const createOrder = async (orderData) => {
   try {
-    const response = await apiClient.post('/orders', orderData)
+    const response = await apiClient.post('/orders/', orderData)
     return response.data
   } catch (error) {
     throw error
@@ -70,7 +70,9 @@ export const deleteOrder = async (id) => {
 // Obtener órdenes por cliente
 export const getOrdersByClient = async (clientId) => {
   try {
-    const response = await apiClient.get('/orders', {
+    
+    // Uncomment below when backend is ready
+    const response = await apiClient.get('/orders/', {
       params: { client_id: clientId }
     })
     return response.data

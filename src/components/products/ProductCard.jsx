@@ -1,13 +1,19 @@
 import React from 'react'
 import { ShoppingCart, Heart, Star, Package } from 'lucide-react'
 import { useCart } from '../../hook/UseCart'
+import { useWishlist } from '../../hook/UseWishlist'
 import { useToast } from '../../hook/UseToast'
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onClick }) => {
   const { addToCart } = useCart()
+  const { addToWishlist, removeFromWishlist, wishlist } = useWishlist()
   const { showToast } = useToast()
 
-  const handleAddToCart = () => {
+  const productId = product.id_key || product.id
+  const isFavorite = wishlist?.some(item => (item.id_key || item.id) === productId)
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation()
     if (product.stock === 0) {
       showToast('Producto agotado', 'error')
       return
@@ -16,12 +22,25 @@ const ProductCard = ({ product }) => {
     showToast(`${product.name} agregado al carrito`, 'success')
   }
 
+  const handleToggleWishlist = (e) => {
+    e.stopPropagation()
+    if (isFavorite) {
+      removeFromWishlist(productId)
+      showToast(`${product.name} removido de la wishlist`, 'info')
+    } else {
+      addToWishlist(product)
+      showToast(`${product.name} agregado a la wishlist`, 'success')
+    }
+  }
+
   return (
-    <div className="group bg-black rounded-xl overflow-hidden border border-green-400/20 hover:border-green-400/60 transition-all hover:shadow-2xl hover:shadow-green-400/30 hover:-translate-y-2 duration-300">
+    <div onClick={onClick} className="group bg-black rounded-xl overflow-hidden border border-green-400/20 hover:border-green-400/60 transition-all hover:shadow-2xl hover:shadow-green-400/30 hover:-translate-y-2 duration-300 cursor-pointer">
       {/* Image */}
-      <div className="relative aspect-[3/4] bg-gradient-to-br from-zinc-900 to-black overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Package size={80} className="text-green-400/20" />
+      <div className="relative aspect-[3/4] bg-gradient-to-br from-zinc-900 to-black overflow-hidden border border-green-400/30">
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <h3 className="text-green-400 font-bold text-lg text-center line-clamp-3 leading-tight">
+            {product.name}
+          </h3>
         </div>
 
         {/* Badges */}
@@ -30,7 +49,7 @@ const ProductCard = ({ product }) => {
             ¡ÚLTIMAS {product.stock} UNIDADES!
           </div>
         )}
-        
+
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm">
             <span className="text-red-400 font-bold text-2xl tracking-wider">AGOTADO</span>
@@ -38,8 +57,18 @@ const ProductCard = ({ product }) => {
         )}
 
         {/* Favorite Button */}
-        <button className="absolute top-4 right-4 p-3 bg-black/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-400 hover:bg-green-400/10 transition-all opacity-0 group-hover:opacity-100 border border-green-400/20">
-          <Heart size={22} />
+        <button
+          onClick={handleToggleWishlist}
+          className={`absolute top-4 right-4 p-3 bg-black/80 backdrop-blur-sm rounded-full transition-all border border-green-400/20 z-10 ${
+            isFavorite
+              ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 opacity-100'
+              : 'text-gray-400 hover:text-red-400 hover:bg-green-400/10 opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          <Heart
+            size={22}
+            fill={isFavorite ? 'currentColor' : 'none'}
+          />
         </button>
 
         {/* Quick View Overlay */}
@@ -55,14 +84,19 @@ const ProductCard = ({ product }) => {
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="text-xs text-green-400 font-semibold tracking-wider uppercase mb-2">
-              {product.category}
+              {typeof product.category === 'object' ? product.category.name : product.category}
             </div>
             <h3 className="font-bold text-white text-lg mb-2 line-clamp-2 leading-tight group-hover:text-green-400 transition-colors">
               {product.name}
             </h3>
+            {product.description && (
+              <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed">
+                {product.description}
+              </p>
+            )}
           </div>
         </div>
-        
+
         {/* Rating */}
         <div className="flex items-center gap-1 mb-4">
           {[...Array(5)].map((_, i) => (

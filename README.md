@@ -1,6 +1,5 @@
-# 🌟 NeonThreads - E-commerce de Ropa Urbana
+# 🌟 G-Store - E-commerce de Ropa Urbana
 
-![NeonThreads Banner](https://via.placeholder.com/1200x300/000000/22c55e?text=NeonThreads+-+Moda+Urbana+Neón)
 
 E-commerce moderno de ropa urbana con diseño oscuro y efectos neón verde fluorescente. Construido con React + Vite y conectado a un backend FastAPI.
 
@@ -43,7 +42,7 @@ E-commerce moderno de ropa urbana con diseño oscuro y efectos neón verde fluor
 ```bash
 # 1. Clonar el repositorio
 git clone <tu-repo-url>
-cd neonthreads-ecommerce
+cd G-Store
 
 # 2. Instalar dependencias
 npm install
@@ -297,9 +296,9 @@ Este proyecto está bajo la Licencia MIT.
 
 ## 👥 Autor
 
-**NeonThreads Team**
+**G-Store Team**
 - GitHub: [@tu-usuario](https://github.com/tu-usuario)
-- Email: contact@neonthreads.com
+- Email: contact@G-Store.com
 
 ---
 
@@ -325,4 +324,4 @@ Este proyecto está bajo la Licencia MIT.
 
 ---
 
-**¡Disfruta construyendo con NeonThreads! 🌟💚**
+**¡Disfruta construyendo con G-Store! 🌟💚**

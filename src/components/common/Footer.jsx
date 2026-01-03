@@ -8,10 +8,10 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-green-400/50">
-                <span className="text-black font-bold text-2xl">NT</span>
+                <span className="text-black font-bold text-2xl">GS</span>
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-                NeonThreads
+                G-Store
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -56,7 +56,7 @@ const Footer = () => {
         </div>
         
         <div className="mt-16 pt-8 border-t border-green-400/20 text-center text-gray-500 text-sm">
-          © 2025 NeonThreads. Todos los derechos reservados. | Diseño con 💚 para la comunidad urbana
+          © 2025 G-Store. Todos los derechos reservados. | Diseño con 💚 para la comunidad urbana
         </div>
       </div>
     </footer>

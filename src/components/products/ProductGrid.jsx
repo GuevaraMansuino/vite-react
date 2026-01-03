@@ -1,59 +1,49 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Grid, List, Filter } from 'lucide-react'
 import ProductCard from './ProductCard'
+import { getProducts } from '../../api/productApi'
 
 const ProductGrid = () => {
-  // Datos de ejemplo - Más adelante estos vendrán del backend
-  const products = [
-    { 
-      id_key: 1, 
-      name: 'Hoodie Cyber Black', 
-      category: 'Hombre', 
-      price: 89.99, 
-      stock: 15,
-      description: 'Hoodie urbano con detalles reflectivos'
-    },
-    { 
-      id_key: 2, 
-      name: 'T-Shirt Neon Vibes', 
-      category: 'Mujer', 
-      price: 45.99, 
-      stock: 8,
-      description: 'Remera con estampado neón exclusivo'
-    },
-    { 
-      id_key: 3, 
-      name: 'Jeans Dark Wash', 
-      category: 'Hombre', 
-      price: 129.99, 
-      stock: 23,
-      description: 'Jeans premium lavado oscuro'
-    },
-    { 
-      id_key: 4, 
-      name: 'Crop Top Holographic', 
-      category: 'Mujer', 
-      price: 39.99, 
-      stock: 5,
-      description: 'Crop top con efecto holográfico'
-    },
-    { 
-      id_key: 5, 
-      name: 'Bomber Jacket LED', 
-      category: 'Hombre', 
-      price: 199.99, 
-      stock: 12,
-      description: 'Campera bomber con luces LED integradas'
-    },
-    { 
-      id_key: 6, 
-      name: 'Dress Gradient Dream', 
-      category: 'Mujer', 
-      price: 149.99, 
-      stock: 0,
-      description: 'Vestido con degradado de colores'
-    },
-  ]
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProducts()
+        console.log('Productos recibidos:', data)
+        console.log('Tipo de data:', typeof data)
+        console.log('Es array?', Array.isArray(data))
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('Primer producto:', data[0])
+        }
+
+        // Datos de prueba temporales
+        const mockProducts = [
+          {
+            id_key: 1,
+            name: 'Producto de Prueba',
+            description: 'Esta es una descripción de prueba',
+            price: 99.99,
+            stock: 10,
+            category: { id: 1, name: 'Categoría de Prueba' }
+          }
+        ]
+
+        // Usar datos reales si existen, sino usar mock
+        const productsToUse = (Array.isArray(data) && data.length > 0) ? data : mockProducts
+        setProducts(productsToUse)
+        setLoading(false)
+      } catch (err) {
+        setError('Error al cargar productos')
+        setLoading(false)
+        console.error('Error fetching products:', err)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   return (
     <div className="py-16 bg-zinc-950">
@@ -64,28 +54,24 @@ const ProductGrid = () => {
             <h2 className="text-4xl font-black text-white mb-2">PRODUCTOS DESTACADOS</h2>
             <p className="text-gray-400">Descubre nuestra colección más vendida</p>
           </div>
-          
-          {/* Controls */}
-          <div className="flex gap-3">
-            <button className="p-3 bg-green-400/20 text-green-400 rounded-lg hover:bg-green-400/30 transition-colors border border-green-400/40">
-              <Grid size={22} />
-            </button>
-            <button className="p-3 bg-zinc-900 text-gray-400 rounded-lg hover:bg-zinc-800 transition-colors border border-zinc-800">
-              <List size={22} />
-            </button>
-            <button className="px-5 py-3 bg-zinc-900 text-gray-300 rounded-lg hover:bg-zinc-800 transition-colors flex items-center gap-2 border border-zinc-800 hover:border-green-400/30">
-              <Filter size={20} />
-              <span className="font-semibold">Filtros</span>
-            </button>
-          </div>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {products.map((product) => (
-            <ProductCard key={product.id_key} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-green-400 text-lg">Cargando productos...</div>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-red-400 text-lg">{error}</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => (
+              <ProductCard key={product.id_key} product={product} />
+            ))}
+          </div>
+        )}
 
         {/* Load More Button */}
         <div className="mt-12 text-center">

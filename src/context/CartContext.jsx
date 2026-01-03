@@ -1,57 +1,124 @@
 import React, { createContext, useState, useEffect } from 'react'
+import { getCart, addToCart as apiAddToCart, updateCartItem, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart } from '../api/cartApi'
 
 export const CartContext = createContext()
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([])
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Cargar carrito desde localStorage al iniciar
+  // Cargar carrito desde localStorage al iniciar (el backend no tiene endpoint de carrito)
   useEffect(() => {
     const storedCart = localStorage.getItem('cart')
     if (storedCart) {
-      setCart(JSON.parse(storedCart))
+      try {
+        setCart(JSON.parse(storedCart))
+      } catch (error) {
+        console.error('Error parsing stored cart:', error)
+        setCart([])
+      }
     }
+    setIsLoading(false)
   }, [])
 
-  // Guardar carrito en localStorage cuando cambie
+  // Sincronizar con localStorage como backup
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart))
-  }, [cart])
+    if (!isLoading) {
+      localStorage.setItem('cart', JSON.stringify(cart))
+    }
+  }, [cart, isLoading])
 
-  const addToCart = (product) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id_key === product.id_key)
-      if (existing) {
-        return prev.map((item) =>
-          item.id_key === product.id_key
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+  const addToCart = async (product) => {
+    try {
+      const productData = {
+        product_id: product.id_key || product.id,
+        quantity: 1,
+        name: product.name,
+        price: product.price,
+        stock: product.stock || 0
       }
-      return [...prev, { ...product, quantity: 1 }]
-    })
+
+      const updatedCart = await apiAddToCart(productData)
+
+      // Verificar que updatedCart e items existan
+      if (updatedCart && updatedCart.items && Array.isArray(updatedCart.items)) {
+        // Transformar respuesta de la API al formato del frontend
+        const transformedItems = updatedCart.items.map(item => ({
+          id_key: item.product_id,
+          id: item.product_id,
+          name: item.name,
+          price: item.price,
+          stock: item.stock,
+          quantity: item.quantity
+        }))
+
+        setCart(transformedItems)
+      } else {
+        console.warn('Updated cart data is invalid:', updatedCart)
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      // Fallback: actualizar localmente si la API falla
+      const productId = product.id_key || product.id
+      setCart((prev) => {
+        const existing = prev.find((item) => (item.id_key || item.id) === productId)
+        if (existing) {
+          return prev.map((item) =>
+            (item.id_key || item.id) === productId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          )
+        }
+        return [...prev, { ...product, quantity: 1 }]
+      })
+    }
   }
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id_key !== id))
+  const removeFromCart = async (id) => {
+    try {
+      await apiRemoveFromCart(id)
+      setCart((prev) => prev.filter((item) => (item.id_key || item.id) !== id))
+    } catch (error) {
+      console.error('Error removing from cart:', error)
+      // Fallback: actualizar localmente si la API falla
+      setCart((prev) => prev.filter((item) => (item.id_key || item.id) !== id))
+    }
   }
 
-  const updateQuantity = (id, quantity) => {
+  const updateQuantity = async (id, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(id)
+      await removeFromCart(id)
       return
     }
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id_key === id ? { ...item, quantity } : item
+
+    try {
+      await updateCartItem(id, quantity)
+      setCart((prev) =>
+        prev.map((item) =>
+          (item.id_key || item.id) === id ? { ...item, quantity } : item
+        )
       )
-    )
+    } catch (error) {
+      console.error('Error updating cart quantity:', error)
+      // Fallback: actualizar localmente si la API falla
+      setCart((prev) =>
+        prev.map((item) =>
+          (item.id_key || item.id) === id ? { ...item, quantity } : item
+        )
+      )
+    }
   }
 
-  const clearCart = () => {
-    setCart([])
-    localStorage.removeItem('cart')
+  const clearCart = async () => {
+    try {
+      await apiClearCart()
+      setCart([])
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      // Fallback: actualizar localmente si la API falla
+      setCart([])
+    }
   }
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -61,6 +128,7 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider
       value={{
         cart,
+        setCart,
         addToCart,
         removeFromCart,
         updateQuantity,

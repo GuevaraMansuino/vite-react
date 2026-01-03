@@ -1,19 +1,19 @@
-import apiClient from './axios.config'
+import apiClient, { billsApiClient } from './axios.config'
 
-// Tipos de pago según el backend
-export const PAYMENT_TYPES = {
-  CASH: 'cash',
-  CARD: 'card'
-}
-
-// Obtener todas las facturas
-export const getBills = async (skip = 0, limit = 10) => {
+// Crear una nueva factura
+export const createBill = async (billData) => {
   try {
-    const response = await apiClient.get('/bills', {
-      params: { skip, limit }
-    })
+    // En desarrollo, usar el cliente principal que va a través del proxy
+    const client = import.meta.env.DEV ? apiClient : billsApiClient
+    const response = await client.post('/bills', billData)
     return response.data
   } catch (error) {
+    // Si hay error de CORS en desarrollo, mostrar mensaje específico
+    if (import.meta.env.DEV && error.message?.includes('CORS')) {
+      console.error('❌ CORS Error: El backend no permite requests desde localhost:3000')
+      console.error('💡 Solución: Configura CORS en el backend para permitir http://localhost:3000')
+      console.error('   O usa la build de producción para probar el checkout')
+    }
     throw error
   }
 }
@@ -28,10 +28,12 @@ export const getBillById = async (id) => {
   }
 }
 
-// Crear una nueva factura
-export const createBill = async (billData) => {
+// Obtener todas las facturas
+export const getBills = async (skip = 0, limit = 10) => {
   try {
-    const response = await apiClient.post('/bills', billData)
+    const response = await apiClient.get('/bills', {
+      params: { skip, limit }
+    })
     return response.data
   } catch (error) {
     throw error
@@ -56,15 +58,4 @@ export const deleteBill = async (id) => {
   } catch (error) {
     throw error
   }
-}
-
-// Generar número de factura único
-export const generateBillNumber = () => {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-  
-  return `BILL-${year}${month}${day}-${random}`
 }
