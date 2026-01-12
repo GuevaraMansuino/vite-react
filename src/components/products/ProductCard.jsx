@@ -71,12 +71,6 @@ const ProductCard = ({ product, onClick }) => {
           />
         </button>
 
-        {/* Quick View Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
-          <button className="px-6 py-2 bg-green-400/20 backdrop-blur-md border border-green-400/50 text-green-400 font-semibold rounded-lg hover:bg-green-400/30 transition-colors">
-            Vista Rápida
-          </button>
-        </div>
       </div>
 
       {/* Content */}
