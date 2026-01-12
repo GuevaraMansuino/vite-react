@@ -57,21 +57,6 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-8 mt-12">
-            <div>
-              <div className="text-3xl font-black text-green-400">500+</div>
-              <div className="text-sm text-gray-400">Productos</div>
-            </div>
-            <div>
-              <div className="text-3xl font-black text-green-400">10k+</div>
-              <div className="text-sm text-gray-400">Clientes</div>
-            </div>
-            <div>
-              <div className="text-3xl font-black text-green-400">4.9★</div>
-              <div className="text-sm text-gray-400">Valoración</div>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -15,7 +15,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Moda urbana con estilo neón para los que se atreven a brillar en la oscuridad.
+              Moda urbana con estilo único. Encuentra lo último en tendencias y viste con actitud.
             </p>
           </div>
           
