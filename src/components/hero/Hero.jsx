@@ -9,14 +9,14 @@ const Hero = () => {
   return (
     <div className="relative h-[600px] bg-gradient-to-br from-black via-zinc-950 to-black overflow-hidden">
       {/* Grid Pattern Background */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIyYzU1ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
-      
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIyYzU1ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30 pointer-events-none" />
+
       {/* Glow Effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1s' }}></div>
       
       {/* Content */}
-      <div className="relative max-w-7xl mx-auto px-4 h-full flex items-center">
+      <div className="relative max-w-7xl mx-auto px-4 h-full flex items-center z-10">
         <div className="max-w-3xl">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-400/10 border border-green-400/30 rounded-full text-green-400 text-sm font-semibold mb-6 backdrop-blur-sm">
@@ -40,18 +40,18 @@ const Hero = () => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-4">
-            <button 
+          <div className="flex flex-wrap gap-4 z-20">
+            <button
               onClick={() => navigate('/products')}
-              className="group px-10 py-5 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-black rounded-lg transition-all shadow-2xl shadow-green-400/50 hover:shadow-green-400/70 text-lg flex items-center gap-2"
+              className="group px-10 py-5 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-black rounded-lg transition-all shadow-2xl shadow-green-400/50 hover:shadow-green-400/70 text-lg flex items-center gap-2 pointer-events-auto"
             >
               <span>VER COLECCIÓN</span>
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
             
-            <button 
+            <button
               onClick={() => setShowModal(true)}
-              className="px-10 py-5 bg-black/80 backdrop-blur-sm border-2 border-green-400/40 hover:border-green-400/80 text-white font-black rounded-lg transition-all hover:bg-green-400/10 text-lg"
+              className="px-10 py-5 bg-black/80 backdrop-blur-sm border-2 border-green-400/40 hover:border-green-400/80 text-white font-black rounded-lg transition-all hover:bg-green-400/10 text-lg pointer-events-auto"
             >
               MÁS INFO
             </button>
@@ -61,7 +61,7 @@ const Hero = () => {
       </div>
 
       {/* Bottom Gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent pointer-events-none"></div>
 
       {/* Info Modal */}
       {showModal && (
