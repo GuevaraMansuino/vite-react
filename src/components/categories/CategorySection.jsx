@@ -105,11 +105,6 @@ const CategorySection = () => {
           </div>
         )}
 
-        <div className="mt-10 text-center">
-          <button className="text-green-400 font-semibold hover:text-green-300 transition-colors flex items-center gap-2 mx-auto">
-            Ver todas las categorías <span className="text-xl">→</span>
-          </button>
-        </div>
 
       </div>
     </div>
