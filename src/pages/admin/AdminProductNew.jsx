@@ -13,7 +13,6 @@ const AdminProductNew = () => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    id_key: '',
     name: '',
     description: '',
     price: '',
@@ -56,7 +55,7 @@ const AdminProductNew = () => {
     console.log('Category ID:', formData.category_id, 'Type:', typeof formData.category_id)
 
     // Validación básica
-    if (!formData.id_key || !formData.name || !formData.price || !formData.category_id) {
+    if (!formData.name || !formData.price || !formData.category_id) {
       showError('Por favor completa todos los campos requeridos')
       return
     }
@@ -75,7 +74,6 @@ const AdminProductNew = () => {
 
     try {
       const productData = {
-        id_key: parseInt(formData.id_key),
         name: formData.name.trim(),
         description: formData.description.trim(),
         price: parseFloat(formData.price),
@@ -116,25 +114,6 @@ const AdminProductNew = () => {
         <div className="bg-zinc-950 rounded-xl border border-green-400/30 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* ID */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  ID del Producto *
-                </label>
-                <input
-                  type="number"
-                  name="id_key"
-                  value={formData.id_key}
-                  onChange={handleInputChange}
-                  placeholder="Ej: 123"
-                  required
-                  className="w-full px-4 py-3 bg-black border border-green-400/30 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-green-400 transition-colors"
-                />
-                <p className="text-xs text-orange-400 mt-1">
-                  ⚠️ Nota: Ingresar manualmente el ID no es una buena práctica
-                </p>
-              </div>
-
               {/* Name */}
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
