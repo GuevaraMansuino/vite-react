@@ -63,3 +63,33 @@ export const getClientAddresses = async (clientId) => {
     throw error
   }
 }
+
+// Crear una nueva dirección
+export const createAddress = async (addressData) => {
+  try {
+    const response = await apiClient.post('/addresses', addressData)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// Actualizar una dirección
+export const updateAddress = async (id, addressData) => {
+  try {
+    const response = await apiClient.put(`/addresses/${id}`, addressData)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// Eliminar una dirección
+export const deleteAddress = async (id) => {
+  try {
+    const response = await apiClient.delete(`/addresses/${id}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

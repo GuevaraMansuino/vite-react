@@ -103,7 +103,7 @@ const Orders = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'all' || order.status === parseInt(statusFilter)
-    const matchesSearch = order.id_key.toString().includes(searchTerm)
+    const matchesSearch = (order.id_key || '').toString().includes(searchTerm)
     return matchesStatus && matchesSearch
   })
 
@@ -119,14 +119,14 @@ const Orders = () => {
               <Package size={24} className="text-black" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">Orden #{order.id_key}</h3>
+            <h3 className="text-white font-bold text-lg">Orden #{order.id_key || 'N/A'}</h3>
               <p className="text-gray-400 text-sm flex items-center gap-2">
                 <Calendar size={14} />
-                {new Date(order.date).toLocaleDateString('es-AR', {
+                {order.date ? new Date(order.date).toLocaleDateString('es-AR', {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric'
-                })}
+                }) : 'Fecha no disponible'}
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ const Orders = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <p className="text-gray-500 text-sm mb-1">Total</p>
-            <p className="text-white font-bold text-xl">${order.total.toFixed(2)}</p>
+            <p className="text-white font-bold text-xl">${(order.total || 0).toFixed(2)}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1">Método de Entrega</p>
@@ -179,8 +179,9 @@ const Orders = () => {
 
         <div className="flex gap-3">
           <button
-            onClick={() => navigate(`/orders/${order.id_key}`)}
-            className="flex-1 py-3 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+            onClick={() => order.id_key && navigate(`/orders/${order.id_key}`)}
+            disabled={!order.id_key}
+            className="flex-1 py-3 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-bold rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Eye size={18} />
             <span>Ver Detalle</span>
@@ -255,7 +256,7 @@ const Orders = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-zinc-950 rounded-xl border border-green-400/20 p-4 text-center">
               <p className="text-3xl font-black text-green-400">{orders.length}</p>
               <p className="text-gray-400 text-sm">Total</p>
@@ -277,6 +278,12 @@ const Orders = () => {
                 {orders.filter(o => o.status === ORDER_STATUS.DELIVERED).length}
               </p>
               <p className="text-gray-400 text-sm">Entregados</p>
+            </div>
+            <div className="bg-zinc-950 rounded-xl border border-red-400/20 p-4 text-center">
+              <p className="text-3xl font-black text-red-400">
+                {orders.filter(o => o.status === ORDER_STATUS.CANCELED).length}
+              </p>
+              <p className="text-gray-400 text-sm">Cancelados</p>
             </div>
           </div>
 
@@ -300,7 +307,7 @@ const Orders = () => {
           ) : (
             <div className="space-y-6">
               {filteredOrders.map(order => (
-                <OrderCard key={order.id_key} order={order} />
+                <OrderCard key={order.id_key || order.id || Math.random()} order={order} />
               ))}
             </div>
           )}

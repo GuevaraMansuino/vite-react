@@ -55,15 +55,18 @@ const Login = () => {
       // TODO: Validar password cuando el backend tenga autenticación
       // Por ahora, cualquier password funciona
 
+      // Limpiar flag de admin para usuarios regulares
+      localStorage.removeItem('isAdmin')
+
       // Guardar usuario completo con ID
       const userData = {
-        id: client.id,
+        id_key: client.id_key || client.id,
         email: client.email,
         name: client.name,
         lastname: client.lastname,
         role: 'customer'
       }
-      
+
       login(userData)
       showToast(`¡Bienvenido ${client.name}!`, 'success')
       navigate('/')

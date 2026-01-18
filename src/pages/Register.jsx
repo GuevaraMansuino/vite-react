@@ -72,6 +72,9 @@ const Register = () => {
 
       const newClient = await createClient(clientData)
       
+      // Limpiar flag de admin para nuevos usuarios
+      localStorage.removeItem('isAdmin')
+
       // Login automático después del registro
       login({
         id: newClient.id_key,

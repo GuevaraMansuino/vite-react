@@ -50,7 +50,8 @@ export const CartProvider = ({ children }) => {
           name: item.name,
           price: item.price,
           stock: item.stock,
-          quantity: item.quantity
+          quantity: item.quantity,
+          category_id: item.category_id || product.category_id // Preserve category_id
         }))
 
         setCart(transformedItems)

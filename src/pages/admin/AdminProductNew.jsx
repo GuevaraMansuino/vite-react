@@ -14,7 +14,6 @@ const AdminProductNew = () => {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     price: '',
     stock: '',
     category_id: ''
@@ -75,7 +74,6 @@ const AdminProductNew = () => {
     try {
       const productData = {
         name: formData.name.trim(),
-        description: formData.description.trim(),
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock) || 0,
         category_id: parseInt(formData.category_id)
@@ -183,21 +181,6 @@ const AdminProductNew = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe el producto..."
-                  rows={4}
-                  className="w-full px-4 py-3 bg-black border border-green-400/30 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-green-400 transition-colors resize-none"
-                />
               </div>
             </div>
 

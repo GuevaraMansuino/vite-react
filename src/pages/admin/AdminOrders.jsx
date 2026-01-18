@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Eye, RefreshCw, ShoppingCart, AlertTriangle,
-  Filter, Calendar, DollarSign, User, Package
+  Filter, Calendar, DollarSign, User, Package, Truck, CheckCircle
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { getOrders, updateOrder, ORDER_STATUS, DELIVERY_METHODS } from '../../api/orderApi'
+import { getClients } from '../../api/clientApi'
 import { useToast } from '../../hook/UseToast'
 
 const AdminOrders = () => {
   const navigate = useNavigate()
   const { showToast, showError, showSuccess } = useToast()
   const [orders, setOrders] = useState([])
+  const [clientsMap, setClientsMap] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [skip, setSkip] = useState(0)
@@ -20,10 +23,10 @@ const AdminOrders = () => {
   const limit = 50
 
   useEffect(() => {
-    loadOrders()
+    loadClients().then((clientsMap) => loadOrders(clientsMap))
   }, [])
 
-  const loadOrders = async (reset = false) => {
+  const loadOrders = async (clientsMapParam = null, reset = false) => {
     try {
       if (reset) {
         setLoading(true)
@@ -38,13 +41,28 @@ const AdminOrders = () => {
         setHasMore(false)
       }
 
+      // Use provided clientsMap or state
+      const currentClientsMap = clientsMapParam || clientsMap
+
+      // Enrich orders with client data
+      const enrichedData = data.map(order => {
+        const clientId = (order.client_id || order.clientId)?.toString()
+        console.log('Order:', order.id_key, 'client_id:', clientId, 'client:', order.client, 'clientsMap keys:', Object.keys(currentClientsMap))
+        const client = order.client || (clientId ? currentClientsMap[clientId] : null)
+        console.log('Resolved client:', client, 'clientId type:', typeof clientId, 'clientsMap[clientId]:', currentClientsMap[clientId])
+        return {
+          ...order,
+          client: client
+        }
+      })
+
       setOrders(prev => {
         if (reset) {
-          return data
+          return enrichedData
         } else {
           // Filter out duplicates based on id_key
           const existingIds = new Set(prev.map(order => order.id_key))
-          const newOrders = data.filter(order => !existingIds.has(order.id_key))
+          const newOrders = enrichedData.filter(order => !existingIds.has(order.id_key))
           return [...prev, ...newOrders]
         }
       })
@@ -57,15 +75,76 @@ const AdminOrders = () => {
     }
   }
 
-  const handleStatusChange = async (orderId, newStatus) => {
+  const loadClients = async () => {
+    console.log('Starting loadClients...')
     try {
-      await updateOrder(orderId, { status: newStatus })
-      setOrders(orders.map(order =>
-        order.id_key === orderId ? { ...order, status: newStatus } : order
+      console.log('Loading clients...')
+      let allClients = []
+      let skip = 0
+      const limit = 50
+      let hasMore = true
+
+      while (hasMore) {
+        console.log('Fetching clients with skip:', skip, 'limit:', limit)
+        const clients = await getClients(skip, limit)
+        console.log('Loaded clients batch:', clients.length, clients)
+        if (clients.length < limit) {
+          hasMore = false
+        }
+        allClients = [...allClients, ...clients]
+        skip += limit
+      }
+
+      console.log('Total clients loaded:', allClients.length)
+      const clientsMap = {}
+      allClients.forEach(client => {
+        clientsMap[client.id.toString()] = client
+        console.log('Mapping client:', client.id, client.name)
+      })
+      console.log('Clients map:', clientsMap)
+      setClientsMap(clientsMap)
+      return clientsMap
+    } catch (error) {
+      console.error('Error cargando clientes:', error)
+      showError('Error al cargar clientes')
+      setLoading(false)
+      return {}
+    }
+  }
+
+  const handleStatusChange = async (orderId, newStatus, order) => {
+    console.log('handleStatusChange called with orderId:', orderId, 'type:', typeof orderId, 'newStatus:', newStatus, 'order:', order)
+    if (!orderId || orderId <= 0) {
+      console.log('Invalid orderId detected:', orderId)
+      showError('ID de orden no válido')
+      return
+    }
+
+    // Backend expects integer status values
+    const statusValue = newStatus
+
+    try {
+      const updateData = {
+        status: statusValue,
+        total: order.total,
+        client_id: order.client_id || order.clientId,
+        delivery_method: order.delivery_method
+      }
+      console.log('Sending update data:', updateData)
+      await updateOrder(orderId, updateData)
+      setOrders(orders.map(o =>
+        o.id === orderId ? { ...o, status: newStatus } : o
       ))
       showSuccess('Estado de orden actualizado')
     } catch (error) {
       console.error('Error actualizando orden:', error)
+      console.error('Error response:', error.response?.data)
+      if (error.response?.data?.detail) {
+        console.error('Validation errors:')
+        error.response.data.detail.forEach((err, index) => {
+          console.error(`Error ${index + 1}:`, err)
+        })
+      }
       showError('Error al actualizar orden')
     }
   }
@@ -121,6 +200,13 @@ const AdminOrders = () => {
     return matchesSearch && matchesStatus
   })
 
+  // Calculate totals
+  const totalOrders = filteredOrders.length
+  const pendingOrders = filteredOrders.filter(order => order.status === ORDER_STATUS.PENDING).length
+  const canceledOrders = filteredOrders.filter(order => order.status === ORDER_STATUS.CANCELED).length
+  const deliveredOrders = filteredOrders.filter(order => order.status === ORDER_STATUS.DELIVERED).length
+  const inProgressOrders = filteredOrders.filter(order => order.status === ORDER_STATUS.IN_PROGRESS).length
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -134,10 +220,10 @@ const AdminOrders = () => {
   if (loading && orders.length === 0) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center min-h-screen bg-zinc-950">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-green-400/30 border-t-green-400 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Cargando órdenes...</p>
+            <p className="text-white">Cargando órdenes...</p>
           </div>
         </div>
       </AdminLayout>
@@ -152,6 +238,55 @@ const AdminOrders = () => {
           <div>
             <h1 className="text-4xl font-black text-white mb-2">ÓRDENES</h1>
             <p className="text-gray-400">{filteredOrders.length} órdenes en total</p>
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="bg-zinc-950 border border-green-400/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <ShoppingCart size={24} className="text-green-400" />
+              <div>
+                <p className="text-gray-400 text-sm">Total de Órdenes</p>
+                <p className="text-white text-2xl font-bold">{totalOrders}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-zinc-950 border border-yellow-400/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={24} className="text-yellow-400" />
+              <div>
+                <p className="text-gray-400 text-sm">Órdenes Pendientes</p>
+                <p className="text-white text-2xl font-bold">{pendingOrders}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-zinc-950 border border-blue-400/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <Truck size={24} className="text-blue-400" />
+              <div>
+                <p className="text-gray-400 text-sm">Órdenes en Progreso</p>
+                <p className="text-white text-2xl font-bold">{inProgressOrders}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-zinc-950 border border-red-400/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <Package size={24} className="text-red-400" />
+              <div>
+                <p className="text-gray-400 text-sm">Órdenes Canceladas</p>
+                <p className="text-white text-2xl font-bold">{canceledOrders}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-zinc-950 border border-green-400/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle size={24} className="text-green-400" />
+              <div>
+                <p className="text-gray-400 text-sm">Órdenes Entregadas</p>
+                <p className="text-white text-2xl font-bold">{deliveredOrders}</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -230,61 +365,64 @@ const AdminOrders = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order, index) => (
-                    <tr key={order.id_key} className="hover:bg-zinc-900/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="text-white font-mono text-sm bg-zinc-800 px-2 py-1 rounded">
-                          {index + 1}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-zinc-800 to-black rounded-lg flex items-center justify-center">
-                            <User size={16} className="text-green-400" />
-                          </div>
-                          <div>
-                            <p className="text-white font-semibold">
-                              {order.client ? order.client.name : 'Cliente desconocido'}
-                            </p>
-                            {order.client && order.client.email && (
-                              <p className="text-gray-400 text-sm">{order.client.email}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-gray-500" />
-                          <span className="text-gray-300 text-sm">
-                            {formatDate(order.created_at)}
+                  filteredOrders.map((order, index) => {
+                    console.log('Order in map:', order.id, 'type:', typeof order.id)
+                    return (
+                      <tr key={order.id || index} className="hover:bg-zinc-900/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="text-white font-mono text-sm bg-zinc-800 px-2 py-1 rounded">
+                            {index + 1}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-sm font-medium">
-                          {getDeliveryMethodText(order.delivery_method)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-zinc-800 to-black rounded-lg flex items-center justify-center">
+                              <User size={16} className="text-green-400" />
+                            </div>
+                            <div>
+                              <p className="text-white font-semibold">
+                                {order.client ? order.client.name : 'Cliente desconocido'}
+                              </p>
+                              {order.client && order.client.email && (
+                                <p className="text-gray-400 text-sm">{order.client.email}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-gray-500" />
+                            <span className="text-gray-300 text-sm">
+                              {formatDate(order.date || order.created_at)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-sm font-medium">
+                            {getDeliveryMethodText(order.delivery_method)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order.id_key, parseInt(e.target.value))}
+                          onChange={(e) => handleStatusChange(order.id, parseInt(e.target.value), order)}
                           className={`px-3 py-1 rounded-full text-sm font-medium border cursor-pointer ${getStatusColor(order.status)}`}
                         >
-                          <option value={ORDER_STATUS.PENDING}>Pendiente</option>
-                          <option value={ORDER_STATUS.IN_PROGRESS}>En Progreso</option>
-                          <option value={ORDER_STATUS.DELIVERED}>Entregado</option>
-                          <option value={ORDER_STATUS.CANCELED}>Cancelado</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <DollarSign size={16} className="text-green-400" />
-                          <p className="text-white font-bold">${order.total?.toFixed(2) || '0.00'}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                            <option value={ORDER_STATUS.PENDING}>Pendiente</option>
+                            <option value={ORDER_STATUS.IN_PROGRESS}>En Progreso</option>
+                            <option value={ORDER_STATUS.DELIVERED}>Entregado</option>
+                            <option value={ORDER_STATUS.CANCELED}>Cancelado</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <DollarSign size={16} className="text-green-400" />
+                            <p className="text-white font-bold">${order.total?.toFixed(2) || '0.00'}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

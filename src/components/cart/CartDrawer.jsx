@@ -1,18 +1,21 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { X, ShoppingCart } from 'lucide-react'
 import { useCart } from '../../hook/UseCart'
 import { useToast } from '../../hook/UseToast'
 import { createOrder } from '../../api/orderApi'
 import { createBill } from '../../api/billApi'
 import { updateProduct } from '../../api/productApi'
+import { createClient, getClients } from '../../api/clientApi'
 import apiClient from '../../api/axios.config'
 import CartItem from './CartItem'
+import CheckoutForm from './CheckoutForm'
 
 const CartDrawer = () => {
   const { cart, isOpen, setIsOpen, total, clearCart } = useCart()
   const { showToast } = useToast()
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false)
 
-  const handleCheckout = async () => {
+  const handleShowCheckoutForm = () => {
     if (cart.length === 0) {
       showToast('Tu carrito está vacío', 'error')
       return
@@ -24,8 +27,14 @@ const CartDrawer = () => {
       return
     }
 
+    setShowCheckoutForm(true)
+  }
+
+  const handleCheckoutSubmit = async (checkoutData) => {
     try {
       showToast('Procesando compra...', 'info')
+
+      const user = JSON.parse(localStorage.getItem('user'))
 
       // 1️⃣ CREAR BILL (PRIMERO)
       const billData = {
@@ -33,8 +42,8 @@ const CartDrawer = () => {
         discount: 0,
         date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
         total: total,
-        payment_type: 1, // CASH
-        client_id: user.id
+        payment_type: checkoutData.payment_method === 'cash' ? 1 : 2, // CASH or CARD
+        client_id: user.id_key
       }
 
       console.log('Creating bill:', billData)
@@ -44,10 +53,10 @@ const CartDrawer = () => {
 
       // 2️⃣ CREAR ORDER CON bill_id
       const orderData = {
-        client_id: user.id,
+        client_id: user.id_key,
         total: total,
         status: 1, // PENDING
-        delivery_method: 2, // ON_HAND
+        delivery_method: checkoutData.delivery_method,
         date: new Date().toISOString(),
         bill_id: bill.id
       }
@@ -71,20 +80,34 @@ const CartDrawer = () => {
       console.log('Order details created')
 
       // 4️⃣ ACTUALIZAR STOCK
-      const stockUpdates = cart.map(item =>
-        updateProduct(item.id, {
-          id: item.id, // 👈 ID DUPLICADO (path + body)
+      const stockUpdates = cart.map(item => {
+        const categoryId = item.category_id ||
+          (item.category && typeof item.category === 'object' ? item.category.id : null) ||
+          (typeof item.category === 'number' ? item.category : null) ||
+          1 // Default category if none found
+
+        console.log('Updating product:', item.id_key || item.id, 'with category_id:', categoryId)
+
+        return updateProduct(item.id_key || item.id, {
           name: item.name,
           price: item.price,
-          category_id: item.category_id,
+          category_id: categoryId,
           stock: item.stock - item.quantity
         })
-      )   
-      await Promise.all(stockUpdates)
-      console.log('Stock updated')
+      })
+
+      try {
+        await Promise.all(stockUpdates)
+        console.log('Stock updated')
+      } catch (stockError) {
+        console.error('Error updating stock:', stockError)
+        // Continue with checkout even if stock update fails
+        showToast('Compra realizada, pero hubo un problema actualizando el stock', 'warning')
+      }
 
       // 5️⃣ LIMPIAR Y CERRAR
       clearCart()
+      setShowCheckoutForm(false)
       setIsOpen(false)
       showToast('¡Compra realizada con éxito!', 'success')
 
@@ -101,8 +124,12 @@ const CartDrawer = () => {
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen) {
+    console.log('CartDrawer not open, returning null')
+    return null
+  }
 
+  console.log('CartDrawer returning JSX')
   return (
     <>
       {/* Overlay */}
@@ -126,7 +153,7 @@ const CartDrawer = () => {
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {cart.length === 0 ? (
+          {(!cart || cart.length === 0) ? (
             <div className="text-center py-12">
               <ShoppingCart size={64} className="mx-auto text-gray-600 mb-4" />
               <p className="text-gray-400">Tu carrito está vacío</p>
@@ -136,7 +163,7 @@ const CartDrawer = () => {
             </div>
           ) : (
             cart.map(item => (
-              <CartItem key={item.id_key} item={item} />
+              <CartItem key={item?.id_key || item?.id || Math.random()} item={item} />
             ))
           )}
         </div>
@@ -161,7 +188,7 @@ const CartDrawer = () => {
             </div>
 
             <button
-              onClick={handleCheckout}
+              onClick={handleShowCheckoutForm}
               className="w-full py-4 bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-black font-bold rounded-lg transition-all shadow-lg shadow-green-400/50 hover:shadow-green-400/70 text-lg"
             >
               FINALIZAR COMPRA
@@ -174,6 +201,15 @@ const CartDrawer = () => {
               Seguir Comprando
             </button>
           </div>
+        )}
+
+        {/* Checkout Form Modal */}
+        {showCheckoutForm && (
+          <CheckoutForm
+            onSubmit={handleCheckoutSubmit}
+            onCancel={() => setShowCheckoutForm(false)}
+            total={total}
+          />
         )}
       </div>
     </>
