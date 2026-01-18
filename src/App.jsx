@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext'
 import { WishlistProvider } from './context/WishlistContext'
 import { ToastProvider } from './context/ToastContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ProductsProvider } from './context/ProductsContext'
 
 // Public Pages
 import Home from './pages/Home'
@@ -51,107 +52,109 @@ function App() {
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ThemeProvider>
         <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <ToastProvider>
-                <div className="min-h-screen bg-black">
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/category/:categoryId" element={<CategoryProducts />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
+          <ProductsProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <ToastProvider>
+                  <div className="min-h-screen bg-black">
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/category/:categoryId" element={<CategoryProducts />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
 
-                    {/* Protected User Routes */}
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/orders"
-                      element={
-                        <ProtectedRoute>
-                          <Orders />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Protected User Routes */}
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/orders"
+                        element={
+                          <ProtectedRoute>
+                            <Orders />
+                          </ProtectedRoute>
+                        }
+                      />
 
 
-                    {/* Admin Routes */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route
-                      path="/admin/dashboard"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/products"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminProducts />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/products/new"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminProductNew />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/products/edit/:id"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminProductEdit />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/categories"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminCategories />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/orders"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminOrders />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/clients"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <AdminClients />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Admin Routes */}
+                      <Route path="/admin/login" element={<AdminLogin />} />
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/products"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminProducts />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/products/new"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminProductNew />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/products/edit/:id"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminProductEdit />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/categories"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminCategories />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/orders"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminOrders />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/clients"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminClients />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Redirects */}
-                    <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </div>
-              </ToastProvider>
-            </WishlistProvider>
-          </CartProvider>
+                      {/* Redirects */}
+                      <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </div>
+                </ToastProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </ProductsProvider>
         </AuthProvider>
       </ThemeProvider>
     </Router>

@@ -72,13 +72,13 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
     }
   }
 
-  const handleAddressSelect = (addressId) => {
-    const selectedAddress = addresses.find(addr => addr.id_key === addressId)
+  const handleAddressSelect = (index) => {
+    const selectedAddress = addresses[index]
     if (selectedAddress) {
       setFormData(prev => ({
         ...prev,
-        selected_address_id: addressId,
-        address: selectedAddress.address,
+        selected_address_id: index,
+        address: `${selectedAddress.street} ${selectedAddress.number}`,
         city: selectedAddress.city,
         postal_code: selectedAddress.postal_code
       }))
@@ -94,7 +94,8 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
       setAddresses(prev => [...prev, newAddress])
       setShowNewAddressForm(false)
       setNewAddress({ address: '', city: '', postal_code: '' })
-      handleAddressSelect(newAddress.id_key)
+      const newIndex = addresses.length // Index of the newly added address
+      handleAddressSelect(newIndex)
       showToast('Dirección agregada correctamente', 'success')
     } catch (error) {
       console.error('Error creating address:', error)
@@ -151,8 +152,8 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
 
     // Address validation for home delivery
     if (formData.delivery_method === DELIVERY_METHODS.HOME_DELIVERY) {
-      if (!formData.address || !formData.city || !formData.postal_code) {
-        showError('Por favor completa todos los datos de entrega a domicilio')
+      if (formData.selected_address_id === null) {
+        showError('Por favor selecciona una dirección de entrega')
         return false
       }
     }
@@ -387,12 +388,12 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
                   <p className="text-gray-300 text-sm">Selecciona una dirección guardada o agrega una nueva:</p>
 
                   {/* Saved Addresses */}
-                  <div className="space-y-3">
-                    {addresses.map((address) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {addresses.map((address, index) => (
                       <label
-                        key={address.id_key}
-                        className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                          formData.selected_address_id === address.id_key
+                        key={`address-${index}`}
+                        className={`relative cursor-pointer rounded-lg border-2 p-6 transition-all ${
+                          formData.selected_address_id === index
                             ? 'border-green-400 bg-green-400/10'
                             : 'border-gray-600 hover:border-gray-500'
                         }`}
@@ -400,16 +401,18 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
                         <input
                           type="radio"
                           name="selected_address"
-                          value={address.id_key}
-                          checked={formData.selected_address_id === address.id_key}
-                          onChange={() => handleAddressSelect(address.id_key)}
+                          value={index}
+                          checked={formData.selected_address_id === index}
+                          onChange={() => handleAddressSelect(index)}
                           className="sr-only"
                         />
                         <div className="flex items-start gap-3">
-                          <MapPin size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-white font-medium">{address.address}</p>
-                            <p className="text-gray-400 text-sm">{address.city}, {address.postal_code}</p>
+                          <MapPin className="text-green-400 mt-1" size={20} />
+                          <div>
+                            <p className="text-white font-semibold">
+                              {address.street} {address.number}
+                            </p>
+                            <p className="text-gray-400 text-sm">{address.city}</p>
                           </div>
                         </div>
                       </label>
@@ -491,8 +494,8 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
 
               {/* New Address Form Modal */}
               {showNewAddressForm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-70 flex items-center justify-center p-4">
-                  <div className="bg-zinc-950 rounded-xl border-2 border-green-400/40 p-6 max-w-md w-full">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-80 flex items-center justify-center p-4">
+                  <div className="bg-zinc-950 rounded-xl border-2 border-green-400/40 p-6 max-w-md w-full shadow-2xl">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="p-3 bg-green-400/10 rounded-lg">
                         <Plus className="text-green-400" size={24} />
@@ -581,11 +584,11 @@ const CheckoutForm = ({ onSubmit, onCancel, total }) => {
               Método de Pago
             </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {paymentOptions.map((option) => (
                 <label
                   key={option.id}
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                  className={`block cursor-pointer rounded-lg border-2 p-4 transition-all ${
                     formData.payment_method === option.id
                       ? 'border-green-400 bg-green-400/10'
                       : 'border-gray-600 hover:border-gray-500'

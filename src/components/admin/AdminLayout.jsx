@@ -78,13 +78,13 @@ const AdminLayout = ({ children }) => {
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] lg:hidden"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-zinc-950 border-r border-green-400/30 z-50 transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-64 bg-zinc-950 border-r border-green-400/30 z-[70] transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >

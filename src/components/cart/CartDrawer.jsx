@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { X, ShoppingCart } from 'lucide-react'
 import { useCart } from '../../hook/UseCart'
 import { useToast } from '../../hook/UseToast'
+import { useProducts } from '../../context/ProductsContext'
 import { createOrder } from '../../api/orderApi'
 import { createBill } from '../../api/billApi'
 import { updateProduct } from '../../api/productApi'
@@ -14,6 +15,16 @@ const CartDrawer = () => {
   const { cart, isOpen, setIsOpen, total, clearCart } = useCart()
   const { showToast } = useToast()
   const [showCheckoutForm, setShowCheckoutForm] = useState(false)
+
+  // Safely get refreshProducts - only available on non-admin pages
+  let refreshProducts = null
+  try {
+    const productsContext = useProducts()
+    refreshProducts = productsContext.refreshProducts
+  } catch (error) {
+    // ProductsContext not available (e.g., on admin pages)
+    refreshProducts = null
+  }
 
   const handleShowCheckoutForm = () => {
     if (cart.length === 0) {
@@ -70,7 +81,7 @@ const CartDrawer = () => {
       const orderDetailsPromises = cart.map(item =>
         apiClient.post('/order_details', {
           order_id: order.id,
-          product_id: item.id,
+          product_id: item.id_key || item.id,
           quantity: item.quantity,
           price: item.price
         })
@@ -80,25 +91,45 @@ const CartDrawer = () => {
       console.log('Order details created')
 
       // 4️⃣ ACTUALIZAR STOCK
-      const stockUpdates = cart.map(item => {
-        const categoryId = item.category_id ||
-          (item.category && typeof item.category === 'object' ? item.category.id : null) ||
-          (typeof item.category === 'number' ? item.category : null) ||
-          1 // Default category if none found
+      const stockUpdates = cart.map(async item => {
+        try {
+          console.log('Updating product stock:', item.id_key || item.id, 'new stock:', Math.max(0, item.stock - item.quantity))
 
-        console.log('Updating product:', item.id_key || item.id, 'with category_id:', categoryId)
+          // Get current product data first
+          const currentProduct = await apiClient.get(`/products/${item.id_key || item.id}`)
+          const productData = currentProduct.data
 
-        return updateProduct(item.id_key || item.id, {
-          name: item.name,
-          price: item.price,
-          category_id: categoryId,
-          stock: item.stock - item.quantity
-        })
+          // Prepare update data with all fields (server requires all fields for update)
+          const updatedData = {
+            id: productData.id,
+            name: productData.name,
+            description: productData.description,
+            price: productData.price,
+            stock: Math.max(0, item.stock - item.quantity),
+            category_id: productData.category_id
+          }
+
+          return updateProduct(item.id_key || item.id, updatedData)
+        } catch (error) {
+          console.error('Error getting product data for update:', error)
+          // Fallback: try to update with minimal data if full data fails
+          try {
+            return updateProduct(item.id_key || item.id, {
+              stock: Math.max(0, item.stock - item.quantity)
+            })
+          } catch (fallbackError) {
+            console.error('Fallback stock update also failed:', fallbackError)
+            throw fallbackError
+          }
+        }
       })
 
       try {
         await Promise.all(stockUpdates)
-        console.log('Stock updated')
+        console.log('Stock updated successfully')
+
+        // Refresh products to update UI with new stock levels
+        refreshProducts()
       } catch (stockError) {
         console.error('Error updating stock:', stockError)
         // Continue with checkout even if stock update fails
@@ -162,8 +193,8 @@ const CartDrawer = () => {
               </p>
             </div>
           ) : (
-            cart.map(item => (
-              <CartItem key={item?.id_key || item?.id || Math.random()} item={item} />
+            cart.map((item, index) => (
+              <CartItem key={`${item?.id_key || item?.id || 'item'}-${index}`} item={item} />
             ))
           )}
         </div>
